@@ -1,0 +1,123 @@
+/* Main styles for Manga Translator API */
+
+/* General styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+footer {
+    margin-top: auto;
+}
+
+/* Image containers */
+.image-container {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-container img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* API endpoint cards */
+.endpoint-card {
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--bs-primary);
+}
+
+.endpoint-method {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.endpoint-method.get {
+    background-color: var(--bs-info);
+    color: var(--bs-dark);
+}
+
+.endpoint-method.post {
+    background-color: var(--bs-success);
+    color: var(--bs-dark);
+}
+
+/* Code blocks */
+pre.code-block {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+/* Loading spinner overlay */
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* Response preview */
+.response-preview {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Documentation sections */
+.doc-section {
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.doc-section:last-child {
+    border-bottom: none;
+}
+
+/* Parameters table */
+.params-table th {
+    width: 20%;
+}
+
+/* API examples */
+.api-example-tabs .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+/* Tag badges */
+.badge-required {
+    background-color: var(--bs-danger);
+}
+
+.badge-optional {
+    background-color: var(--bs-secondary);
+}
+
+/* Collapsible sections */
+.collapsible-section {
+    cursor: pointer;
+}
+
+.collapsible-section::after {
+    content: "▼";
+    float: right;
+    margin-left: 5px;
+}
+
+.collapsible-section.collapsed::after {
+    content: "►";
+}

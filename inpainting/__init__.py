@@ -1,0 +1,1 @@
+# Inpainting module initialization

@@ -1,104 +1,228 @@
-# LiveTranslatorScreen
+# Manga Translator API
 
-A Python application for real-time manga page translation. The current phase includes an end-to-end pipeline that integrates OCR, translation, and image overlay functionality.
+A modular Flask-based API for manga/text processing with multiple inpainting models, OCR providers (local and cloud-based), and translation options.
 
 ## Features
 
-- **Full Conversion Pipeline:**  
-  Combines OCR, translation, and image drawing into a single streamlined process.
-  
-- **Modular Architecture:**  
-  Easily swap or configure the translator, OCR, and drawing components by selecting from available modules and providing JSON-formatted arguments.
+- **Multiple OCR Providers**: Support for Tesseract, EasyOCR, Azure Computer Vision, and AWS Textract
+- **Advanced Inpainting**: LaMa and Stable Diffusion-based inpainting for text removal
+- **Comprehensive Translation Options**: 
+  - OpenAI LLM-based translation (GPT-3.5/GPT-4)
+  - Google Translate API integration
+  - DeepL API integration
+  - Local Ollama LLM integration
+  - Hugging Face models fallback
+- **YOLO Integration**: Compatible with custom YOLO models for text detection
+- **Segmentation**: Precise mask generation using segmentation models
+- **Asynchronous Processing**: Parallel processing for better performance
+- **RESTful API**: Simple JSON API for all functionality
 
-- **Batch Processing:**  
-  Process single images or batches of images with simple function calls.
+## Getting Started
 
-- **Image Preprocessing:**  
-  Includes utilities for slicing images, resizing with padding, and annotation conversions (e.g., COCO to YOLO formats).
+### Prerequisites
 
-- **GPU Support:**  
-  Optionally leverage CUDA (via PyTorch) to accelerate computations if available.
+- Python 3.11+
+- OpenCV
+- PyTorch (for YOLO models)
+- Flask and Gunicorn
 
-## Table of Contents
+### Running Locally
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Installation
-
-1. **Clone the Repository:**
+1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/LiveTranslatorScreen.git
-   cd LiveTranslatorScreen
+   git clone https://github.com/yourusername/manga-translator-api.git
+   cd manga-translator-api
    ```
 
-2. **Create a Virtual Environment (optional but recommended):**
+2. Install dependencies using pip:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   pip install -e .
+   ```
+   This will install all dependencies defined in the pyproject.toml file.
+
+3. Configure environment variables for translation services (optional):
+   ```bash
+   # OpenAI API for LLM translation
+   export OPENAI_API_KEY=your_openai_api_key
+   
+   # Google Cloud Translation (optional)
+   export GOOGLE_API_KEY=your_google_api_key
+   export GOOGLE_PROJECT_ID=your_google_project_id
+   
+   # DeepL Translation (optional)
+   export DEEPL_API_KEY=your_deepl_api_key
+   
+   # Ollama (optional, for local LLM translation)
+   export OLLAMA_API_HOST=http://localhost:11434  # Default Ollama endpoint
    ```
 
-3. **Install Dependencies:**
-   Ensure you have Python 3.9+ installed. Then install the required packages:
+4. Run the application:
    ```bash
-   pip install -r requirements.txt
+   # Development mode with auto-reload
+   python main.py
+   
+   # Production mode with Gunicorn
+   gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
    ```
 
-4. **Tesseract OCR Setup:**
-   - Install Tesseract OCR on your system.
-   - Ensure that `pytesseract.pytesseract.tesseract_cmd` points to the correct Tesseract executable.
+### Docker Deployment
 
-## Usage
+Build and run using Docker:
 
-The conversion pipeline is managed via the `do_convert` function. This function accepts a list of image file paths along with configuration arguments for the translator, OCR, and drawing modules.
+```bash
+# Build the Docker image
+docker build -t manga-translator .
 
-### Example
-```python
-from conversion_module import do_convert  # Adjust the import path as needed
-
-data = do_convert(
-    files=["/path/to/Sample/Naruto_jp.png"],
-    translator=1,
-    translator_args="{}",  # JSON configuration for the translator
-    ocr=2,
-    ocr_args="{}",         # JSON configuration for OCR
-    drawer=0,
-    drawer_args="{}"       # JSON configuration for the drawer
-)
-
-# 'data' is a dictionary mapping converted filenames to their processed images.
-print(data)
+# Run the container with environment variables
+docker run -p 5000:5000 \
+  -e OPENAI_API_KEY=your_openai_api_key \
+  -e GOOGLE_API_KEY=your_google_api_key \
+  -e GOOGLE_PROJECT_ID=your_google_project_id \
+  -e DEEPL_API_KEY=your_deepl_api_key \
+  manga-translator
 ```
 
-## Project Structure
+The Docker image is based on Python 3.11-slim and includes all necessary system dependencies for OpenCV and other components.
 
+### Requirements
+
+The application depends on the following Python packages:
+
+- **Web Framework**: Flask, Gunicorn
+- **Image Processing**: OpenCV, Pillow, NumPy
+- **Machine Learning**: PyTorch
+- **OCR**: EasyOCR (simplified implementation)
+- **Translation**: OpenAI, Google Cloud Translate, DeepL
+- **Utilities**: Requests, aiohttp, PyYAML
+- **Database**: Flask-SQLAlchemy, psycopg2-binary (for PostgreSQL support)
+
+All dependencies are specified in the pyproject.toml file. The application is designed to work even without certain API keys, falling back to simpler models when needed.
+
+## API Endpoints
+
+### Process Image
 ```
-LiveTranslatorScreen/
-├── LiveTranslatorScreen.ipynb         # Main notebook for live translation
-├── conversion_module.py               # Contains the conversion pipeline logic
-├── image_utils.py                     # Image slicing, resizing, and preprocessing utilities
-├── annotation_utils.py                # Annotation conversion utilities, e.g., COCO to YOLO
-├── requirements.txt                   # List of dependencies
-├── README.md                          # This file
-└── ...
+POST /api/process
 ```
+Process a manga image with text detection, OCR, inpainting, and translation.
+
+#### Request Body
+```json
+{
+    "image": "base64_encoded_image",
+    "ocr_provider": "tesseract|easyocr|azure|aws",
+    "inpainting_model": "lama|stable_diffusion",
+    "translator": "huggingface|llm|ollama|google|deepl",
+    "source_language": "ja|ko|en|zh|...",
+    "target_language": "en|ja|ko|zh|fr|de|es|...",
+    "detection_model": "path/to/yolo_model.pt",
+    "segmentation_model": "path/to/segmentation_model.pt"
+}
+```
+
+#### Response
+```json
+{
+    "processed_image": "base64_encoded_processed_image",
+    "detected_texts": [
+        {
+            "text": "original_text",
+            "translated_text": "translated_text",
+            "bounding_box": [x, y, width, height],
+            "confidence": 0.95
+        }
+    ],
+    "processing_time": {
+        "detection": 0.5,
+        "segmentation": 0.3,
+        "ocr": 0.3,
+        "inpainting": 0.8,
+        "translation": 0.4,
+        "total": 2.0
+    }
+}
+```
+
+### OCR
+```
+POST /api/ocr
+```
+Perform OCR on an image with specified provider.
+
+### Translate
+```
+POST /api/translate
+```
+Translate text using specified provider.
+
+### Inpaint
+```
+POST /api/inpaint
+```
+Perform inpainting on an image with specified model.
+
+### Detect
+```
+POST /api/detect
+```
+Detect text regions in an image.
+
+### Segment
+```
+POST /api/segment
+```
+Generate precise segmentation mask for text regions.
+
+### Providers
+```
+GET /api/providers
+```
+Get all available providers for OCR, translation, and inpainting.
 
 ## Configuration
 
-- **Module Arguments:**  
-  The translator, OCR, and drawer modules are configurable via JSON strings passed as arguments. For example, if your translator module requires a model path or language setting, include those in the JSON:
-  ```json
-  translator_args='{"model_path": "/path/to/model", "src_lang": "ja", "tgt_lang": "en"}'
-  ```
+Edit `core/config.py` to change default settings.
 
-- **Pipeline Adjustments:**  
-  Customize the pipeline by modifying the module selections in `get_translators()`, `get_ocr()`, and `get_drawers()`.
+## External Models
 
-## Contributing
+To use custom YOLO models for detection or segmentation, provide the model paths in the API requests or configure them in `core/config.py`.
 
-Contributions are welcome
+## Cloud Services
 
+### OCR Services
+
+To use cloud-based OCR providers:
+
+1. For Azure Computer Vision:
+   - Set `AZURE_VISION_KEY` and `AZURE_VISION_ENDPOINT` environment variables
+
+2. For AWS Textract:
+   - Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables
+
+### Translation Services
+
+The system supports multiple translation services with proper fallback mechanisms:
+
+1. **OpenAI LLM Translation**:
+   - Set `OPENAI_API_KEY` environment variable
+   - Configure the model name in `translation/llm_translator.py` (default: `gpt-3.5-turbo`)
+
+2. **Google Cloud Translation**:
+   - Set `GOOGLE_API_KEY` and `GOOGLE_PROJECT_ID` environment variables
+   - Requires Google Cloud project with Translation API enabled
+
+3. **DeepL Translation**:
+   - Set `DEEPL_API_KEY` environment variable
+   - Provides high-quality translations for supported language pairs
+
+4. **Ollama (Local LLM)**:
+   - Set `OLLAMA_API_HOST` environment variable (default: `http://localhost:11434`)
+   - Requires Ollama server running locally or in another container
+
+5. **Hugging Face (Fallback)**:
+   - Always available without API keys
+   - Uses simplified translations for demonstration purposes
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

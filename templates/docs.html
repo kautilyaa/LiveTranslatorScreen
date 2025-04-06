@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Manga Translator API</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <div class="container py-5">
+        <header class="mb-5">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1>Manga Translator API Documentation</h1>
+                <a href="/" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> Back to Home
+                </a>
+            </div>
+            <hr>
+            <p class="lead">This documentation provides details about all available API endpoints, request/response formats, and example usage for the Manga Translator API.</p>
+        </header>
+
+        <!-- API Overview -->
+        <section id="overview" class="doc-section">
+            <h2>API Overview</h2>
+            <p>The Manga Translator API provides a comprehensive set of endpoints for processing manga images, performing OCR, inpainting, and translation. The API follows a modular design with plugin architecture for different providers.</p>
+            
+            <h3 class="mt-4">Base URL</h3>
+            <pre class="code-block">http://localhost:5000/api</pre>
+            
+            <h3 class="mt-4">Available Endpoints</h3>
+            <ul class="list-group list-group-flush bg-dark">
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/process</code> - Process manga image (end-to-end pipeline)</span>
+                    <span class="badge bg-success">POST</span>
+                </li>
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/ocr</code> - Perform OCR on an image</span>
+                    <span class="badge bg-success">POST</span>
+                </li>
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/translate</code> - Translate text</span>
+                    <span class="badge bg-success">POST</span>
+                </li>
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/inpaint</code> - Inpaint an image with mask</span>
+                    <span class="badge bg-success">POST</span>
+                </li>
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/detect</code> - Detect text regions in an image</span>
+                    <span class="badge bg-success">POST</span>
+                </li>
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
+                    <span><code>/providers</code> - List available providers</span>
+                    <span class="badge bg-info">GET</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Authentication -->
+        <section id="authentication" class="doc-section">
+            <h2>Authentication</h2>
+            <p>The API currently does not require authentication for local development. For cloud-based OCR and translation services, API keys must be configured as environment variables.</p>
+            
+            <h3 class="mt-4">Environment Variables</h3>
+            <div class="table-responsive">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Description</th>
+                            <th>Required For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>AZURE_API_KEY</code></td>
+                            <td>Azure Computer Vision API key</td>
+                            <td>Azure OCR provider</td>
+                        </tr>
+                        <tr>
+                            <td><code>AZURE_ENDPOINT</code></td>
+                            <td>Azure Computer Vision endpoint URL</td>
+                            <td>Azure OCR provider</td>
+                        </tr>
+                        <tr>
+                            <td><code>AWS_ACCESS_KEY</code></td>
+                            <td>AWS access key ID</td>
+                            <td>AWS Textract OCR provider</td>
+                        </tr>
+                        <tr>
+                            <td><code>AWS_SECRET_KEY</code></td>
+                            <td>AWS secret access key</td>
+                            <td>AWS Textract OCR provider</td>
+                        </tr>
+                        <tr>
+                            <td><code>AWS_REGION</code></td>
+                            <td>AWS region (default: us-east-1)</td>
+                            <td>AWS Textract OCR provider</td>
+                        </tr>
+                        <tr>
+                            <td><code>OPENAI_API_KEY</code></td>
+                            <td>OpenAI API key</td>
+                            <td>LLM translator</td>
+                        </tr>
+                        <tr>
+                            <td><code>GOOGLE_API_KEY</code></td>
+                            <td>Google Cloud API key</td>
+                            <td>Google translator</td>
+                        </tr>
+                        <tr>
+                            <td><code>GOOGLE_PROJECT_ID</code></td>
+                            <td>Google Cloud project ID</td>
+                            <td>Google translator</td>
+                        </tr>
+                        <tr>
+                            <td><code>DEEPL_API_KEY</code></td>
+                            <td>DeepL API key</td>
+                            <td>DeepL translator</td>
+                        </tr>
+                        <tr>
+                            <td><code>OLLAMA_API_HOST</code></td>
+                            <td>Ollama API host URL (default: http://localhost:11434)</td>
+                            <td>Ollama translator</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Endpoints -->
+        <section id="endpoints" class="doc-section">
+            <h2>API Endpoints</h2>
+
+            <!-- Process Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method post">POST</span>/process
+                    </h3>
+                    <p class="card-text">Process a manga image with text detection, OCR, inpainting, and translation.</p>
+                    
+                    <h4 class="mt-4">Request Parameters</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded image data</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>ocr_provider</code></td>
+                                    <td>string</td>
+                                    <td>OCR provider name (tesseract, easyocr, azure, aws)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>inpainting_model</code></td>
+                                    <td>string</td>
+                                    <td>Inpainting model name (lama, stable_diffusion)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>translator</code></td>
+                                    <td>string</td>
+                                    <td>Translator provider name (huggingface, llm, ollama, google, deepl)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>source_language</code></td>
+                                    <td>string</td>
+                                    <td>Source language code (ja, ko, en, etc.)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>target_language</code></td>
+                                    <td>string</td>
+                                    <td>Target language code (en, ja, ko, etc.)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>processed_image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded processed image with inpainted text regions</td>
+                                </tr>
+                                <tr>
+                                    <td><code>detected_texts</code></td>
+                                    <td>array</td>
+                                    <td>Array of detected text objects with original and translated text</td>
+                                </tr>
+                                <tr>
+                                    <td><code>processing_time</code></td>
+                                    <td>object</td>
+                                    <td>Timing information for each processing step</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example</h4>
+                    <ul class="nav nav-tabs api-example-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="process-request-tab" data-bs-toggle="tab" data-bs-target="#process-request" type="button" role="tab">Request</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="process-response-tab" data-bs-toggle="tab" data-bs-target="#process-response" type="button" role="tab">Response</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="process-request" role="tabpanel">
+                            <pre class="code-block" id="process-example">
+{
+  "image": "base64_encoded_image_data",
+  "ocr_provider": "tesseract",
+  "inpainting_model": "lama",
+  "translator": "huggingface",
+  "source_language": "ja",
+  "target_language": "en"
+}</pre>
+                        </div>
+                        <div class="tab-pane fade" id="process-response" role="tabpanel">
+                            <pre class="code-block">
+{
+  "processed_image": "base64_encoded_processed_image",
+  "detected_texts": [
+    {
+      "text": "こんにちは世界",
+      "translated_text": "Hello world",
+      "bounding_box": [100, 200, 150, 50],
+      "confidence": 0.95
+    }
+  ],
+  "processing_time": {
+    "detection": 0.2,
+    "ocr": 0.3,
+    "inpainting": 0.8,
+    "translation": 0.4,
+    "total": 1.7
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCR Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method post">POST</span>/ocr
+                    </h3>
+                    <p class="card-text">Perform OCR on an image with specified provider.</p>
+                    
+                    <h4 class="mt-4">Request Parameters</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded image data</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>provider</code></td>
+                                    <td>string</td>
+                                    <td>OCR provider name (tesseract, easyocr, azure, aws)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>language</code></td>
+                                    <td>string</td>
+                                    <td>Language code for OCR (ja, ko, en, etc.)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>text_results</code></td>
+                                    <td>array</td>
+                                    <td>Array of detected text objects</td>
+                                </tr>
+                                <tr>
+                                    <td><code>processing_time</code></td>
+                                    <td>number</td>
+                                    <td>Time taken for OCR processing in seconds</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example</h4>
+                    <ul class="nav nav-tabs api-example-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="ocr-request-tab" data-bs-toggle="tab" data-bs-target="#ocr-request" type="button" role="tab">Request</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ocr-response-tab" data-bs-toggle="tab" data-bs-target="#ocr-response" type="button" role="tab">Response</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="ocr-request" role="tabpanel">
+                            <pre class="code-block" id="ocr-example">
+{
+  "image": "base64_encoded_image_data",
+  "provider": "tesseract",
+  "language": "ja"
+}</pre>
+                        </div>
+                        <div class="tab-pane fade" id="ocr-response" role="tabpanel">
+                            <pre class="code-block">
+{
+  "text_results": [
+    {
+      "text": "こんにちは世界",
+      "language": "ja"
+    }
+  ],
+  "processing_time": 0.3
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translate Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method post">POST</span>/translate
+                    </h3>
+                    <p class="card-text">Translate text using specified provider.</p>
+                    
+                    <h4 class="mt-4">Request Parameters</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>text</code></td>
+                                    <td>string</td>
+                                    <td>Text to translate</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>provider</code></td>
+                                    <td>string</td>
+                                    <td>Translator provider name (huggingface, llm, ollama, google, deepl)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>source_language</code></td>
+                                    <td>string</td>
+                                    <td>Source language code (ja, ko, en, etc.)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>target_language</code></td>
+                                    <td>string</td>
+                                    <td>Target language code (en, ja, ko, etc.)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>translated_text</code></td>
+                                    <td>string</td>
+                                    <td>Translated text</td>
+                                </tr>
+                                <tr>
+                                    <td><code>processing_time</code></td>
+                                    <td>number</td>
+                                    <td>Time taken for translation in seconds</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example</h4>
+                    <ul class="nav nav-tabs api-example-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="translate-request-tab" data-bs-toggle="tab" data-bs-target="#translate-request" type="button" role="tab">Request</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="translate-response-tab" data-bs-toggle="tab" data-bs-target="#translate-response" type="button" role="tab">Response</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="translate-request" role="tabpanel">
+                            <pre class="code-block" id="translate-example">
+{
+  "text": "こんにちは世界",
+  "provider": "huggingface",
+  "source_language": "ja",
+  "target_language": "en"
+}</pre>
+                        </div>
+                        <div class="tab-pane fade" id="translate-response" role="tabpanel">
+                            <pre class="code-block">
+{
+  "translated_text": "Hello world",
+  "processing_time": 0.4
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inpaint Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method post">POST</span>/inpaint
+                    </h3>
+                    <p class="card-text">Perform inpainting on an image with specified model.</p>
+                    
+                    <h4 class="mt-4">Request Parameters</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded image data</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>mask</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded mask image (white areas will be inpainted)</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>model</code></td>
+                                    <td>string</td>
+                                    <td>Inpainting model name (lama, stable_diffusion)</td>
+                                    <td><span class="badge badge-optional">No</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>inpainted_image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded inpainted image</td>
+                                </tr>
+                                <tr>
+                                    <td><code>processing_time</code></td>
+                                    <td>number</td>
+                                    <td>Time taken for inpainting in seconds</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example</h4>
+                    <ul class="nav nav-tabs api-example-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="inpaint-request-tab" data-bs-toggle="tab" data-bs-target="#inpaint-request" type="button" role="tab">Request</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="inpaint-response-tab" data-bs-toggle="tab" data-bs-target="#inpaint-response" type="button" role="tab">Response</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="inpaint-request" role="tabpanel">
+                            <pre class="code-block" id="inpaint-example">
+{
+  "image": "base64_encoded_image_data",
+  "mask": "base64_encoded_mask_data",
+  "model": "lama"
+}</pre>
+                        </div>
+                        <div class="tab-pane fade" id="inpaint-response" role="tabpanel">
+                            <pre class="code-block">
+{
+  "inpainted_image": "base64_encoded_inpainted_image",
+  "processing_time": 0.8
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detect Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method post">POST</span>/detect
+                    </h3>
+                    <p class="card-text">Detect text regions in an image.</p>
+                    
+                    <h4 class="mt-4">Request Parameters</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>image</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded image data</td>
+                                    <td><span class="badge badge-required">Yes</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>regions</code></td>
+                                    <td>array</td>
+                                    <td>Array of detected text regions with bounding boxes</td>
+                                </tr>
+                                <tr>
+                                    <td><code>visualization</code></td>
+                                    <td>string</td>
+                                    <td>Base64-encoded visualization image with bounding boxes</td>
+                                </tr>
+                                <tr>
+                                    <td><code>processing_time</code></td>
+                                    <td>number</td>
+                                    <td>Time taken for detection in seconds</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example</h4>
+                    <ul class="nav nav-tabs api-example-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="detect-request-tab" data-bs-toggle="tab" data-bs-target="#detect-request" type="button" role="tab">Request</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="detect-response-tab" data-bs-toggle="tab" data-bs-target="#detect-response" type="button" role="tab">Response</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="detect-request" role="tabpanel">
+                            <pre class="code-block" id="detect-example">
+{
+  "image": "base64_encoded_image_data"
+}</pre>
+                        </div>
+                        <div class="tab-pane fade" id="detect-response" role="tabpanel">
+                            <pre class="code-block">
+{
+  "regions": [
+    {
+      "bounding_box": [100, 200, 150, 50],
+      "confidence": 0.95
+    }
+  ],
+  "visualization": "base64_encoded_visualization_image",
+  "processing_time": 0.5
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Providers Endpoint -->
+            <div class="card endpoint-card bg-dark mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <span class="endpoint-method get">GET</span>/providers
+                    </h3>
+                    <p class="card-text">Get all available providers for OCR, translation, and inpainting.</p>
+                    
+                    <h4 class="mt-4">Response</h4>
+                    <div class="table-responsive">
+                        <table class="table table-dark params-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>ocr</code></td>
+                                    <td>array</td>
+                                    <td>List of available OCR providers</td>
+                                </tr>
+                                <tr>
+                                    <td><code>inpainting</code></td>
+                                    <td>array</td>
+                                    <td>List of available inpainting models</td>
+                                </tr>
+                                <tr>
+                                    <td><code>translation</code></td>
+                                    <td>array</td>
+                                    <td>List of available translators</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Example Response</h4>
+                    <pre class="code-block">
+{
+  "ocr": ["tesseract", "easyocr", "azure", "aws"],
+  "inpainting": ["lama", "stable_diffusion"],
+  "translation": ["huggingface", "llm", "ollama", "google", "deepl"]
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Handling -->
+        <section id="errors" class="doc-section">
+            <h2>Error Handling</h2>
+            <p>The API returns standard HTTP status codes and a JSON response with an error message when an error occurs.</p>
+            
+            <h4 class="mt-4">Error Response Format</h4>
+            <pre class="code-block">
+{
+  "error": "Error message describing what went wrong"
+}</pre>
+            
+            <h4 class="mt-4">Common Error Codes</h4>
+            <div class="table-responsive">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>400</td>
+                            <td>Bad Request - Missing required parameters or invalid data</td>
+                        </tr>
+                        <tr>
+                            <td>404</td>
+                            <td>Not Found - Endpoint not found</td>
+                        </tr>
+                        <tr>
+                            <td>500</td>
+                            <td>Internal Server Error - Server-side error occurred</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Client Libraries -->
+        <section id="client-libraries" class="doc-section">
+            <h2>Client Library Examples</h2>
+            
+            <h3 class="mt-4">Python Example</h3>
+            <pre class="code-block">
+import requests
+import base64
+from PIL import Image
+import io
+
+# Load image file
+with open('manga_image.jpg', 'rb') as image_file:
+    image_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+# Call process endpoint
+url = 'http://localhost:5000/api/process'
+payload = {
+    'image': image_data,
+    'ocr_provider': 'tesseract',
+    'inpainting_model': 'lama',
+    'translator': 'huggingface',
+    'source_language': 'ja',
+    'target_language': 'en'
+}
+
+response = requests.post(url, json=payload)
+result = response.json()
+
+# Display results
+if 'error' not in result:
+    # Convert base64 processed image back to image
+    processed_image_data = base64.b64decode(result['processed_image'])
+    processed_image = Image.open(io.BytesIO(processed_image_data))
+    processed_image.show()
+    
+    # Print detected texts
+    for text in result['detected_texts']:
+        print(f"Original: {text['text']}")
+        print(f"Translated: {text['translated_text']}")
+        print("---")
+else:
+    print(f"Error: {result['error']}")
+</pre>
+
+            <h3 class="mt-4">JavaScript Example</h3>
+            <pre class="code-block">
+// Function to process a manga image
+async function processImage(imageFile) {
+  // Convert file to base64
+  const base64Image = await fileToBase64(imageFile);
+  
+  // Call process endpoint
+  const response = await fetch('http://localhost:5000/api/process', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      image: base64Image,
+      ocr_provider: 'tesseract',
+      inpainting_model: 'lama',
+      translator: 'huggingface',
+      source_language: 'ja',
+      target_language: 'en'
+    })
+  });
+  
+  // Parse response
+  const result = await response.json();
+  
+  if (!result.error) {
+    // Process successful
+    console.log('Processing successful!');
+    console.log('Detected texts:', result.detected_texts);
+    
+    // Display processed image
+    const processedImageElement = document.getElementById('processed-image');
+    processedImageElement.src = `data:image/jpeg;base64,${result.processed_image}`;
+  } else {
+    // Handle error
+    console.error('Error:', result.error);
+  }
+}
+
+// Helper function to convert file to base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+      const base64String = reader.result.split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+</pre>
+        </section>
+    </div>
+    
+    <footer class="bg-dark text-center text-white-50 py-4">
+        <div class="container">
+            <p>Manga Translator API - Modular text processing system</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script>
+        // Initialize Feather icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            
+            // Initialize tabs
+            const triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+            triggerTabList.forEach(function(triggerEl) {
+                new bootstrap.Tab(triggerEl);
+            });
+        });
+    </script>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

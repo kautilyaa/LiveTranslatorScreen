@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Translator API</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="mb-3">Manga Translator API</h1>
+            <p class="lead">A modular API for manga text processing, OCR, inpainting, and translation</p>
+        </header>
+
+        <div class="row mb-5">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card bg-dark mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title">Try It Out</h2>
+                        <form id="process-form" class="mb-3">
+                            <div class="mb-3">
+                                <label for="image-upload" class="form-label">Upload Manga Image</label>
+                                <input type="file" class="form-control" id="image-upload" accept="image/*">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="ocr-provider" class="form-label">OCR Provider</label>
+                                    <select class="form-select" id="ocr-provider">
+                                        <option value="tesseract">Tesseract OCR</option>
+                                        <option value="easyocr">EasyOCR</option>
+                                        <option value="azure">Azure Computer Vision</option>
+                                        <option value="aws">AWS Textract</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="inpainting-model" class="form-label">Inpainting Model</label>
+                                    <select class="form-select" id="inpainting-model">
+                                        <option value="lama">LaMa</option>
+                                        <option value="stable_diffusion">Stable Diffusion</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="translator" class="form-label">Translator</label>
+                                    <select class="form-select" id="translator">
+                                        <option value="huggingface">Hugging Face</option>
+                                        <option value="llm">LLM (OpenAI)</option>
+                                        <option value="ollama">Ollama (Local)</option>
+                                        <option value="google">Google Translate</option>
+                                        <option value="deepl">DeepL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="source-language" class="form-label">Source Language</label>
+                                    <select class="form-select" id="source-language">
+                                        <option value="ja">Japanese</option>
+                                        <option value="ko">Korean</option>
+                                        <option value="zh">Chinese</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="target-language" class="form-label">Target Language</label>
+                                    <select class="form-select" id="target-language">
+                                        <option value="en">English</option>
+                                        <option value="ja">Japanese</option>
+                                        <option value="ko">Korean</option>
+                                        <option value="zh">Chinese</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                        <option value="es">Spanish</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Process Image</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="results" class="d-none">
+                    <div class="card bg-dark mb-4">
+                        <div class="card-body">
+                            <h3 class="card-title">Results</h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4>Original Image</h4>
+                                    <div class="image-container mb-3">
+                                        <img id="original-image" class="img-fluid rounded" alt="Original image">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Processed Image</h4>
+                                    <div class="image-container mb-3">
+                                        <img id="processed-image" class="img-fluid rounded" alt="Processed image">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h4 class="mt-4">Detected Text</h4>
+                            <div class="table-responsive">
+                                <table class="table table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>Original Text</th>
+                                            <th>Translated Text</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="text-results">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <h5>Processing Time</h5>
+                                <ul id="processing-times">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="loading" class="text-center d-none">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing image...</p>
+                </div>
+                
+                <div id="error-message" class="alert alert-danger d-none">
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-5">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card bg-dark">
+                    <div class="card-body">
+                        <h2 class="card-title">API Features</h2>
+                        <ul class="list-group list-group-flush bg-dark">
+                            <li class="list-group-item bg-dark">Multiple OCR providers (Tesseract, EasyOCR, Azure, AWS)</li>
+                            <li class="list-group-item bg-dark">Advanced inpainting models (LaMa, Stable Diffusion)</li>
+                            <li class="list-group-item bg-dark">Translation with Hugging Face transformers, OpenAI LLM, Google Translate, DeepL, and local Ollama models</li>
+                            <li class="list-group-item bg-dark">Text detection with YOLO</li>
+                            <li class="list-group-item bg-dark">Modular plugin architecture</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <a href="/docs" class="btn btn-secondary">View API Documentation</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-dark text-center text-white-50 py-4">
+        <div class="container">
+            <p>Manga Translator API - Modular text processing system</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>
